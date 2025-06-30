@@ -8,6 +8,9 @@ Para instalar as dependências
 
  ```bash
   npm install
+
+  pip install matplotlib
+  pip install pandas
 ```
 
 loading...
