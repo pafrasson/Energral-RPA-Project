@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Registro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Cadastro de Registro</h1>
+    <form id="formulario">
+        <label for="id_maquina">Máquina:</label>
+        <select id="id_maquina" required>
+            <option value="">Selecione a máquina</option>
+        </select>
+        <label for="id_tecnico">Técnico:</label>
+
+        <select id="id_tecnico" required>
+            <option value="">Selecione o técnico</option>
+        </select>
+        <label for="data_hora">Data e Hora:</label>
+        <input type="datetime-local" id="data_hora" required>
+
+        <label for="observacao">Observação:</label>
+        <textarea id="observacao" rows="4" placeholder="Digite uma observação..."></textarea>
+
+        <label for="status">Status:</label>
+        <select id="status" required>
+            <option value="">Selecione o status</option>
+            <option value="inativo">Inativo</option>
+            <option value="operacional">Operacional</option>
+            <option value="falha">Falha</option>
+            <option value="falha crítica">Falha Crítica</option>
+            <option value="em manutenção">Em Manutenção</option>
+        </select>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
