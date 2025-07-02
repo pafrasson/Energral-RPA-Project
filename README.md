@@ -9,3 +9,19 @@ Para instalar as dependências
  ```bash
   npm install
 ```
+# Como utilizar
+1. dentro da pasta do projeto
+
+ ```bash
+  cd backend
+```
+2. depois
+ ```bash
+  node server.js
+```
+3. o server e o front estarão rodando em
+
+ ```bash
+  http://localhost:3000
+```
+Só abrir esse link e ser feliz
