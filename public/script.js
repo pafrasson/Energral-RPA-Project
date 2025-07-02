@@ -5,8 +5,8 @@ fetch("/api/maquinas")
         const select = document.getElementById("id_maquina");
         maquinas.forEach(maquina => {
             const option = document.createElement("option");
-            option.value = maquina.id;
-            option.textContent = maquina.nome;
+            option.value = maquina.id_equipamento;
+            option.textContent = maquina.id_equipamento;
             select.appendChild(option);
         });
     })
@@ -19,7 +19,7 @@ fetch("/api/tecnicos")
         const select = document.getElementById("id_tecnico");
         tecnicos.forEach(tecnico => {
             const option = document.createElement("option");
-            option.value = tecnico.id;
+            option.value = tecnico.id_funcionario;
             option.textContent = tecnico.nome;
             select.appendChild(option);
         });
