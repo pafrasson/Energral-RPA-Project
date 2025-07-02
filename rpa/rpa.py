@@ -8,14 +8,28 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
+
+'''
+this function defines the credentials of the email and the recipient.
+'''
 def SendEmail(subject: str, body: str, attach: bool):
     sender_email = "gabriel.paiva.gamers@gmail.com"
     sender_password = "rakvlxfpssgmfnrb"
     recipient_email = "gabriel.paiva.gamers@gmail.com"
 
     logging.info('working to attach the excel file to the email')
+    
+    '''
+    when called, it will check if the specific email has an attachment
+    '''
     if attach == True:
-        with open(arquivo_excel, "rb") as attachment:
+
+        '''
+        if it has an attachment it will enter this code, where it will build the excel 
+        attachment and then inserts it in the email body
+        '''
+        with open(excelfile, "rb") as attachment:
             part = MIMEBase("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             part.set_payload(attachment.read())
         encoders.encode_base64(part)
@@ -38,6 +52,11 @@ def SendEmail(subject: str, body: str, attach: bool):
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient_email, message.as_string())
     else:
+        
+        '''
+        if it doesn't have an attachment it enters this code and then builds the body without
+        inserting an attachment
+        '''
         message = MIMEMultipart()
         message['Subject'] = subject
         message['From'] = sender_email
@@ -56,30 +75,40 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logging.info('Starting process')
 
 logging.info('connecting to sistems')
-arquivo_excel = "C:/Users/Aluno/Desktop/Teste.xlsx"
+'''
+this part connects the code with the database and gets the information of the
+specified table
+'''
+excelfile = "C:/Users/Aluno/Desktop/Teste.xlsx"
 engine = create_engine('sqlite:///C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend/database.db')
 checklist = pd.read_sql_query("SELECT * FROM checklist;", engine)
-alertas = pd.read_sql_query("SELECT * FROM alertas;", engine)
-i = 0
+alerts = pd.read_sql_query("SELECT * FROM alertas;", engine)
+
+'''
+this variable initiates an counter to run through the rows of the table Alertas
+'''
+rowindex = 0
 logging.info('finished connecting to sistems')
 
 logging.info('starting to check for critical failure')
 
-
-if not alertas.empty:
+'''
+this part runs through the alertas table and searches for each Falha Crítica
+when he finds one he sends an email to the specified manager with the machine id and the checklist id of the failure 
+'''
+if not alerts.empty:
     logging.info("there were failure machines")
     try:
-        for row in alertas.itertuples(index=False):
+        for row in alerts.itertuples(index=False):
             logging.info('starting to check one item')
-            valor = f"{row.id_alerta} {row.id_checklist} {row.status_de_resolucao}"
-            valoresChecklist = pd.read_sql_query("SELECT c.id_equipamento, c.status from alertas a INNER JOIN checklist c ON a.id_checklist = c.id_checklist", engine)
-            status = valoresChecklist.loc[i, 'status']
-            equipamento = valoresChecklist.loc[i, 'id_equipamento']
-            print(status)
+            value = f"{row.id_alerta} {row.id_checklist} {row.status_de_resolucao}"
+            valuesChecklist = pd.read_sql_query("SELECT c.id_equipamento, c.status from alertas a INNER JOIN checklist c ON a.id_checklist = c.id_checklist", engine)
+            status = valuesChecklist.loc[rowindex, 'status']
+            equipament = valuesChecklist.loc[rowindex, 'id_equipamento']
             if status == 'Falha Crítica':
                 logging.info("a critical failure was found")
-                SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + row.id_checklist + ' da maquina de id: ' + equipamento + ' constou falha critica', False)
-            i = i + 1
+                SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + row.id_checklist + ' da maquina de id: ' + equipament + ' constou falha critica', False)
+            rowindex = rowindex + 1
             logging.info('checked one item, going to next')
     except Exception as e:
         logging.error('failure in the processing', e)
@@ -91,19 +120,24 @@ else:
 
 logging.info('starting to write data tables to excel')
 
-with pd.ExcelWriter(arquivo_excel) as writer:
+'''
+this part of the code gets the values of the tables of the database and write them in an excel file.
+this part will later be updated to write in google sheets 
+'''
+with pd.ExcelWriter(excelfile) as writer:
     checklist.to_excel(excel_writer=writer, sheet_name='Plan1', index = None)
-    alertas.to_excel(excel_writer=writer, sheet_name='Plan2', index = None)
+    alerts.to_excel(excel_writer=writer, sheet_name='Plan2', index = None)
 logging.info('finished writing to excel')
 
 logging.info('opening excel to to adjust the size of columns')
-wb = load_workbook(arquivo_excel)
+wb = load_workbook(excelfile)
 ws = wb.active
 
 
 
 '''
-esse loop percorre cada coluna e altera o tamanho dela para encaixar o maior valor presente nas celulas
+this loop runs through the columns of the excel and then through each cell in the column, searching for the highest value of letters
+to set the column size, he then saves the excel file
 '''
 for coluna in ws.columns:
     max_length = 0
@@ -117,16 +151,18 @@ for coluna in ws.columns:
     ws.column_dimensions[coluna_letra].width = max_length + 2
 logging.info('finished formatting excel')
 
-wb.save(arquivo_excel)
+wb.save(excelfile)
+
 logging.info('saved excel file')
 
 logging.info('starting to send email')
 
+'''
+this part sends the email putting the excel file as an attachment in the email
+'''
 SendEmail('Conclusao de envio de checklist', 'segue em anexo arquivo excel com todas as checagens e falhas do dia', True)
 
 logging.info('email sent')
 
 logging.info('finished process')
-
-
 
