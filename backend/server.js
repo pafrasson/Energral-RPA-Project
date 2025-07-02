@@ -10,44 +10,16 @@ const db = new sqlite3.Database('./database.db');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Criação das tabelas
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS maquinas (
-        id TEXT PRIMARY KEY,
-        nome TEXT
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS tecnicos (
-        id TEXT PRIMARY KEY,
-        nome TEXT
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS registros (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_maquina TEXT,
-        id_tecnico TEXT,
-        data_hora TEXT,
-        observacao TEXT,
-        status TEXT,
-        FOREIGN KEY (id_maquina) REFERENCES maquinas(id),
-        FOREIGN KEY (id_tecnico) REFERENCES tecnicos(id)
-    )`);
-
-    db.run(`INSERT OR IGNORE INTO maquinas (id, nome) VALUES ('M001', 'Máquina 1'), ('M002', 'Máquina 2')`);
-    db.run(`INSERT OR IGNORE INTO tecnicos (id, nome) VALUES ('T001', 'Técnico João'), ('T002', 'Técnico Ana')`);
-
-});
-
 // Rotas para buscar máquinas e técnicos
 app.get('/api/maquinas', (req, res) => {
-    db.all(`SELECT id, nome FROM maquinas`, [], (err, rows) => {
+    db.all(`SELECT id_equipamento FROM maquinas`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
 app.get('/api/tecnicos', (req, res) => {
-    db.all(`SELECT id, nome FROM tecnicos`, [], (err, rows) => {
+    db.all(`SELECT id_funcionario, nome FROM funcionarios`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -58,9 +30,9 @@ app.post('/api/registro', (req, res) => {
     const { id_maquina, id_tecnico, data_hora, observacao, status } = req.body;
 
     db.run(
-        `INSERT INTO registros (id_maquina, id_tecnico, data_hora, observacao, status)
+        `INSERT INTO checklist (data_hora, id_equipamento, id_funcionario, observacao, status)
          VALUES (?, ?, ?, ?, ?)`,
-        [id_maquina, id_tecnico, data_hora, observacao, status],
+        [data_hora, id_maquina, id_tecnico, observacao, status],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ success: true, id: this.lastID });
