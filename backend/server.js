@@ -29,16 +29,39 @@ app.get('/api/tecnicos', (req, res) => {
 app.post('/api/registro', (req, res) => {
     const { id_maquina, id_tecnico, data_hora, observacao, status } = req.body;
 
-    db.run(
-        `INSERT INTO checklist (data_hora, id_equipamento, id_funcionario, observacao, status)
-         VALUES (?, ?, ?, ?, ?)`,
-        [data_hora, id_maquina, id_tecnico, observacao, status],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true, id: this.lastID });
-        }
-    );
+    // Inicia uma transação
+    db.serialize(() => {
+        // 1. Insere na tabela checklist
+        db.run(
+            `INSERT INTO checklist (data_hora, id_equipamento, id_funcionario, observacao, status)
+             VALUES (?, ?, ?, ?, ?)`,
+            [data_hora, id_maquina, id_tecnico, observacao, status],
+            function (err) {
+                if (err) {
+                    console.error("Erro ao inserir no checklist:", err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+
+                const insertedId = this.lastID;
+
+                // 2. Atualiza o status da máquina correspondente
+                db.run(
+                    `UPDATE maquinas SET status_maquina = ? WHERE id_equipamento = ?`,
+                    [status, id_maquina],
+                    function (err2) {
+                        if (err2) {
+                            console.error("Erro ao atualizar status da máquina:", err2.message);
+                            return res.status(500).json({ error: err2.message });
+                        }
+
+                        res.json({ success: true, id: insertedId });
+                    }
+                );
+            }
+        );
+    });
 });
+
 
 // Iniciar servidor
 const PORT = 3000;
