@@ -1,3 +1,19 @@
+# Padronização de commits
+| Tipo       | Uso                                                                |
+| ---------- | ------------------------------------------------------------------ |
+| `feat`     | Nova funcionalidade                                                |
+| `fix`      | Correção de bug                                                    |
+| `docs`     | Mudança na documentação                                            |
+| `style`    | Formatação, ponto e vírgula, espaço, etc (sem alteração de código) |
+| `refactor` | Refatoração de código (sem alterar comportamento)                  |
+| `test`     | Adição ou alteração de testes                                      |
+| `chore`    | Tarefas menores (build, config, dependências, etc)                 |
+## exemplos
+
+- feat: adiciona botão de login com Google
+- fix: corrige bug no token de autenticação
+- refactor: simplifica lógica de criação de usuário
+
 # REQUISITOS PARA RODAR ESSE PROJETO
 baixem sqlite e node
 - [tutorial setup sqlite e node](https://medium.com/@sahni_hargun/getting-started-with-node-js-and-sqlite3-6508a342c0b0)
