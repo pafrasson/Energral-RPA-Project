@@ -11,22 +11,23 @@
     <h1>Cadastro de Registro</h1>
     <form id="formulario">
         <label for="id_maquina">Máquina:</label>
-        <select id="id_maquina" required>
+        <select id="id_maquina" name="id_maquina" required>
             <option value="">Selecione a máquina</option>
         </select>
-        <label for="id_tecnico">Técnico:</label>
 
-        <select id="id_tecnico" required>
+        <label for="id_tecnico">Técnico:</label>
+        <select id="id_tecnico" name="id_tecnico" required>
             <option value="">Selecione o técnico</option>
         </select>
+
         <label for="data_hora">Data e Hora:</label>
-        <input type="datetime-local" id="data_hora" required>
+        <input type="datetime-local" id="data_hora" name="data_hora" required>
 
         <label for="observacao">Observação:</label>
-        <textarea id="observacao" rows="4" placeholder="Digite uma observação..."></textarea>
+        <textarea id="observacao" name="observacao" rows="4" placeholder="Digite uma observação..."></textarea>
 
         <label for="status">Status:</label>
-        <select id="status" required>
+        <select id="status" name="status" required>
             <option value="">Selecione o status</option>
             <option value="inativo">Inativo</option>
             <option value="operacional">Operacional</option>

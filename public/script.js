@@ -1,46 +1,61 @@
+// Carrega máquinas no select
+fetch("/api/maquinas")
+    .then(res => res.json())
+    .then(maquinas => {
+        const select = document.getElementById("id_maquina");
+        maquinas.forEach(maquina => {
+            const option = document.createElement("option");
+            option.value = maquina.id;
+            option.textContent = maquina.nome;
+            select.appendChild(option);
+        });
+    })
+    .catch(err => console.error("Erro ao carregar máquinas:", err));
 
-async function carregarSelects() {
-    const maquinas = await fetch('/api/maquinas').then(res => res.json());
-    const tecnicos = await fetch('/api/tecnicos').then(res => res.json());
+// Carrega técnicos no select
+fetch("/api/tecnicos")
+    .then(res => res.json())
+    .then(tecnicos => {
+        const select = document.getElementById("id_tecnico");
+        tecnicos.forEach(tecnico => {
+            const option = document.createElement("option");
+            option.value = tecnico.id;
+            option.textContent = tecnico.nome;
+            select.appendChild(option);
+        });
+    })
+    .catch(err => console.error("Erro ao carregar técnicos:", err));
 
-    const selectMaquina = document.getElementById('id_maquina');
-    const selectTecnico = document.getElementById('id_tecnico');
-
-    maquinas.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.nome;
-        selectMaquina.appendChild(opt);
-    });
-
-    tecnicos.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = t.nome;
-        selectTecnico.appendChild(opt);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', carregarSelects);
-
-
-document.getElementById('formulario').addEventListener('submit', async function (e) {
+// Envio do formulário
+document.getElementById("formulario").addEventListener("submit", function (e) {
     e.preventDefault();
 
-    const dados = {
-        id_maquina: document.getElementById('id_maquina').value,
-        id_tecnico: document.getElementById('id_tecnico').value,
-        data_hora: document.getElementById('data_hora').value,
-        observacao: document.getElementById('observacao').value,
-        status: document.getElementById('status').value
+    const data = {
+        id_maquina: document.getElementById("id_maquina").value,
+        id_tecnico: document.getElementById("id_tecnico").value,
+        data_hora: document.getElementById("data_hora").value,
+        observacao: document.getElementById("observacao").value,
+        status: document.getElementById("status").value
     };
 
-    const resposta = await fetch('/api/registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dados)
-    });
-
-    const resultado = await resposta.json();
-    alert('Registro criado com ID: ' + resultado.id);
+    fetch("/api/registro", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                alert("Registro salvo com sucesso!");
+                document.getElementById("formulario").reset();
+            } else {
+                alert("Erro ao salvar registro.");
+            }
+        })
+        .catch(err => {
+            alert("Erro ao conectar com o servidor.");
+            console.error(err);
+        });
 });
