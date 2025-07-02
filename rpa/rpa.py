@@ -16,7 +16,6 @@ def SendEmail(subject: str, body: str, attach: bool):
     logging.info('working to attach the excel file to the email')
     if attach == True:
         with open(arquivo_excel, "rb") as attachment:
-            # Adicione o anexo à mensagem
             part = MIMEBase("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             part.set_payload(attachment.read())
         encoders.encode_base64(part)
@@ -59,7 +58,7 @@ logging.info('Starting process')
 logging.info('connecting to sistems')
 arquivo_excel = "C:/Users/Aluno/Desktop/Teste.xlsx"
 engine = create_engine('sqlite:///C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend/database.db')
-checklist = pd.read_sql_query("SELECT * FROM maquinas;", engine)
+checklist = pd.read_sql_query("SELECT * FROM checklist;", engine)
 alertas = pd.read_sql_query("SELECT * FROM alertas;", engine)
 i = 0
 logging.info('finished connecting to sistems')
@@ -79,7 +78,7 @@ if not alertas.empty:
             print(status)
             if status == 'Falha Crítica':
                 logging.info("a critical failure was found")
-                SendEmail('Alerta!', 'a checagem de id: ' + row.id_checklist + 'da maquina de id: ' + equipamento + 'constou falha critica', False)
+                SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + row.id_checklist + ' da maquina de id: ' + equipamento + ' constou falha critica', False)
             i = i + 1
             logging.info('checked one item, going to next')
     except Exception as e:
@@ -91,18 +90,21 @@ else:
 
 
 logging.info('starting to write data tables to excel')
-checklist.to_excel(arquivo_excel, sheet_name="Plan1", index=False)
-alertas.to_excel(arquivo_excel, sheet_name="Plan2", index=False)
+
+with pd.ExcelWriter(arquivo_excel) as writer:
+    checklist.to_excel(excel_writer=writer, sheet_name='Plan1', index = None)
+    alertas.to_excel(excel_writer=writer, sheet_name='Plan2', index = None)
 logging.info('finished writing to excel')
 
 logging.info('opening excel to to adjust the size of columns')
 wb = load_workbook(arquivo_excel)
 ws = wb.active
 
+
+
 '''
 esse loop percorre cada coluna e altera o tamanho dela para encaixar o maior valor presente nas celulas
 '''
-
 for coluna in ws.columns:
     max_length = 0
     coluna_letra = coluna[0].column_letter
