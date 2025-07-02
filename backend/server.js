@@ -8,7 +8,7 @@ const db = new sqlite3.Database('./database.db');
 
 // Middleware
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Criação das tabelas
 db.serialize(() => {
