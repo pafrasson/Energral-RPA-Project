@@ -8,8 +8,7 @@ fetch("/api/maquinas")
             option.value = maquina.id_equipamento;
             option.textContent = maquina.id_equipamento;
             select.appendChild(option);
-        });
-    })
+        });})
     .catch(err => console.error("Erro ao carregar máquinas:", err));
 
 // Carrega técnicos no select
