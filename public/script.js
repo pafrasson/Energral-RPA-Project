@@ -47,7 +47,7 @@ document.getElementById("formulario").addEventListener("submit", function (e) {
     })
         .then(res => res.json())
         .then(response => {
-            if (response.success) {
+            if (response.success || response.id) {
                 alert("Registro salvo com sucesso!");
                 document.getElementById("formulario").reset();
             } else {

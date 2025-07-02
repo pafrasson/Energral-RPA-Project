@@ -63,7 +63,7 @@ app.post('/api/registro', (req, res) => {
         [id_maquina, id_tecnico, data_hora, observacao, status],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID });
+            res.json({ success: true, id: this.lastID });
         }
     );
 });
