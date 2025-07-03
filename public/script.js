@@ -1,5 +1,7 @@
+const API_BASE = "http://localhost:3000";
+
 // Carrega máquinas no select
-fetch("/api/maquinas")
+fetch(`${API_BASE}/api/maquinas`)
     .then(res => res.json())
     .then(maquinas => {
         const select = document.getElementById("id_maquina");
@@ -13,7 +15,7 @@ fetch("/api/maquinas")
     .catch(err => console.error("Erro ao carregar máquinas:", err));
 
 // Carrega técnicos no select
-fetch("/api/tecnicos")
+fetch(`${API_BASE}/api/tecnicos`)
     .then(res => res.json())
     .then(tecnicos => {
         const select = document.getElementById("id_tecnico");
@@ -28,7 +30,7 @@ fetch("/api/tecnicos")
 
 // Função para enviar dados (com fallback para localStorage)
 function enviarRegistro(data) {
-    fetch("/api/registro", {
+    fetch(`${API_BASE}/api/registro`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -65,7 +67,7 @@ function verificarEnviosPendentes() {
     const enviados = [];
 
     pendentes.forEach((registro, index) => {
-        fetch("/api/registro", {
+        fetch(`${API_BASE}/api/registro`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -109,4 +111,3 @@ document.getElementById("formulario").addEventListener("submit", function (e) {
 
 // Tentar reenviar registros pendentes ao carregar a página
 window.addEventListener("load", verificarEnviosPendentes);
-
