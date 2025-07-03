@@ -31,6 +31,11 @@ if getattr(sys, 'frozen', False):
 else:
     pdf_path = 'C:/Users/Aluno/Desktop'
 
+if getattr(sys, 'frozen', False):
+    creden_path = os.path.dirname(sys.executable)
+else:
+    creden_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
+
 
 '''
 this function defines the credentials of the email and the recipient.
@@ -135,7 +140,7 @@ def SendSheetsFile(alerts):
     "https://www.googleapis.com/auth/drive"
     ]
 
-    creds = creds = service_account.Credentials.from_service_account_file("C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa/credentials.json", scopes=scope)
+    creds = creds = service_account.Credentials.from_service_account_file(f"{creden_path}/credentials.json", scopes=scope)
     client = gspread.authorize(creds)
 
     spreadsheet = client.open('Teste')
