@@ -2,8 +2,11 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
+app.use(cors()); 
+
 const db = new sqlite3.Database('./database.db');
 
 // Middleware
