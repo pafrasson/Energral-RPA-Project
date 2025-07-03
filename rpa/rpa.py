@@ -36,9 +36,9 @@ else:
 this function defines the credentials of the email and the recipient.
 '''
 def SendEmail(subject: str, body: str, attach: bool):
-    sender_email = "gabriel.paiva.gamers@gmail.com"
-    sender_password = "rakvlxfpssgmfnrb"
-    recipient_email = "gabriel.paiva.gamers@gmail.com"
+    sender_email = ""
+    sender_password = ""
+    recipient_email = ""
 
     logging.info('verifying if there is a need to attach the pdf file to the email')
     
