@@ -10,6 +10,23 @@ from email.mime.text import MIMEText
 import time
 import sqlite3
 import threading
+import os
+import sys
+
+
+'''
+these conditionals get the paths of the database and excel file respectivily, when in script it gets the one i setted,
+when in .exe it gets the path where the .exe is.
+'''
+if getattr(sys, 'frozen', False):
+    directory_path = os.path.dirname(sys.executable)
+else:
+    directory_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend'
+
+if getattr(sys, 'frozen', False):
+    excel_path = os.path.dirname(sys.executable)
+else:
+    excel_path = 'C:/Users/Aluno/Desktop'
 
 
 '''
@@ -83,11 +100,10 @@ def SendAlert(alerts, cursor, conn):
             for row in alerts.itertuples(index=False):
                 rowindex = 0
                 logging.info('starting to check one item')
-                value =row.id_checklist
                 valuesChecklist = pd.read_sql_query(f"SELECT c.id_equipamento, c.status FROM checklist c WHERE c.id_checklist = '{row.id_checklist}'", engine)
                 status = valuesChecklist.loc[rowindex, 'status']
                 equipament = valuesChecklist.loc[rowindex, 'id_equipamento']
-                if status == 'Falha Crítica':
+                if status == 'Falha Crítica' or 'falha crítica':
                     logging.info("a critical failure was found")
                     SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + row.id_checklist + ' da maquina de id: ' + equipament + ' constou falha critica', False)
                     cursor.execute('UPDATE checklist SET status = ? WHERE id_checklist = ?', ('Falha Crítica*', row.id_checklist))
@@ -98,7 +114,7 @@ def SendAlert(alerts, cursor, conn):
             logging.error('failure in the processing', e)
     else:
         logging.info("no critical failure was found")
-    logging.info('finished chicking for critical failures')
+    logging.info('finished checking for critical failures')
 
 
 
@@ -147,7 +163,7 @@ def SendExcelFile(alerts):
 
     logging.info('email sent')
 
-    logging.info('finished process')
+    logging.info('finished sending the email')
 
 
 
@@ -156,7 +172,7 @@ def StartAlerts():
     ultimo_id = 0
 
     while True:
-        conn = sqlite3.connect('C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend/database.db')
+        conn = sqlite3.connect(directory_path + '/database.db')
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM alertas WHERE id_alerta > ?", (ultimo_id,))
@@ -183,7 +199,15 @@ def StartExcelFile():
 
         time.sleep(14400)
 
+'''
+the threading let two loops run simultaniously
+'''
+def StartBot():
+    t1 = threading.Thread(target=StartAlerts)
+    t2 = threading.Thread(target=StartExcelFile)
 
+    t1.start()
+    t2.start()
 
 
 
@@ -192,26 +216,20 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 logging.info('Starting process')
 
-logging.info('connecting to sistems')
+logging.info('connecting to systems')
 
 '''
 this part connects the code with the database and gets the information of the
 specified table
 '''
-
-excelfile = "C:/Users/Aluno/Desktop/Teste.xlsx"
-engine = create_engine('sqlite:///C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend/database.db')
+excelfile = f'{excel_path}/Teste.xlsx'
+engine = create_engine(f'sqlite:///{directory_path}/database.db')
 checklist = pd.read_sql_query("SELECT * FROM checklist;", engine)
 '''
 this variable initiates an counter to run through the rows of the table Alertas
 '''
-logging.info('finished connecting to sistems')
+logging.info('finished connecting to systems')
 
 
 
-t1 = threading.Thread(target=StartAlerts)
-t2 = threading.Thread(target=StartExcelFile)
-
-t1.start()
-t2.start()
-
+StartBot()
