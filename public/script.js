@@ -1,18 +1,33 @@
 const API_BASE = "http://localhost:3000";
 
 // Carrega máquinas no select
-fetch(`${API_BASE}/api/maquinas`)
-    .then(res => res.json())
-    .then(maquinas => {
-        const select = document.getElementById("id_maquina");
-        maquinas.forEach(maquina => {
-            const option = document.createElement("option");
-            option.value = maquina.id_equipamento;
-            option.textContent = maquina.id_equipamento;
-            select.appendChild(option);
+function carregarMaquinas() {
+    fetch(`${API_BASE}/api/maquinas`)
+        .then(res => res.json())
+        .then(maquinas => {
+            localStorage.setItem("cached_maquinas", JSON.stringify(maquinas)); // salva localmente
+            popularSelectMaquinas(maquinas);
+        })
+        .catch(() => {
+            const cached = localStorage.getItem("cached_maquinas");
+            if (cached) {
+                popularSelectMaquinas(JSON.parse(cached));
+            } else {
+                alert("Erro ao carregar máquinas e não há dados locais.");
+            }
         });
-    })
-    .catch(err => console.error("Erro ao carregar máquinas:", err));
+}
+
+function popularSelectMaquinas(maquinas) {
+    const select = document.getElementById("id_maquina");
+    select.innerHTML = '<option value="">Selecione a máquina</option>';
+    maquinas.forEach(maquina => {
+        const option = document.createElement("option");
+        option.value = maquina.id_equipamento;
+        option.textContent = maquina.id_equipamento;
+        select.appendChild(option);
+    });
+}
 
 // Carrega técnicos no select
 fetch(`${API_BASE}/api/tecnicos`)
@@ -62,12 +77,11 @@ function salvarLocalmente(data) {
 
 function verificarEnviosPendentes() {
     const pendentes = JSON.parse(localStorage.getItem("registrosPendentes")) || [];
+
     if (pendentes.length === 0) return;
 
-    const enviados = [];
-
-    pendentes.forEach((registro, index) => {
-        fetch(`${API_BASE}/api/registro`, {
+    const promessas = pendentes.map((registro, index) => {
+        return fetch(`${API_BASE}/api/registro`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -77,21 +91,24 @@ function verificarEnviosPendentes() {
             .then(res => res.json())
             .then(response => {
                 if (response.success || response.id) {
-                    enviados.push(index);
-                    console.log("Registro pendente enviado com sucesso.");
+                    console.log("Registro pendente enviado com sucesso:", registro);
+                    return index; // marcar como enviado
+                } else {
+                    console.warn("Servidor respondeu com erro ao reenviar registro.");
+                    return null;
                 }
             })
             .catch(err => {
-                console.warn("Falha ao reenviar registro pendente.", err);
+                console.warn("Erro ao reenviar registro pendente:", err);
+                return null;
             });
     });
 
-    // Remover os que foram enviados com sucesso
-    setTimeout(() => {
-        const atualizados = JSON.parse(localStorage.getItem("registrosPendentes")) || [];
-        const novosPendentes = atualizados.filter((_, i) => !enviados.includes(i));
+    Promise.all(promessas).then(indicesEnviados => {
+        const enviadosComSucesso = indicesEnviados.filter(i => i !== null);
+        const novosPendentes = pendentes.filter((_, i) => !enviadosComSucesso.includes(i));
         localStorage.setItem("registrosPendentes", JSON.stringify(novosPendentes));
-    }, 2000);
+    });
 }
 
 // Envio do formulário
@@ -109,5 +126,9 @@ document.getElementById("formulario").addEventListener("submit", function (e) {
     enviarRegistro(data);
 });
 
+// Carregar máquinas
+carregarMaquinas();
 // Tentar reenviar registros pendentes ao carregar a página
-window.addEventListener("load", verificarEnviosPendentes);
+window.addEventListener("load", () => {
+    verificarEnviosPendentes();
+});
