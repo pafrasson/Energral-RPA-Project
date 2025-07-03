@@ -14,7 +14,7 @@ scope = [
 creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
 client = gspread.authorize(creds)
 
-planilha = client.open("Sheet1")
+planilha = client.open("Teste")
 
 # Selecionar a aba (sheet) pelo nome ou índice
 sheet = planilha.worksheet("Plan1")  # ou .get_worksheet(0)
