@@ -30,18 +30,33 @@ function popularSelectMaquinas(maquinas) {
 }
 
 // Carrega técnicos no select
-fetch(`${API_BASE}/api/tecnicos`)
-    .then(res => res.json())
-    .then(tecnicos => {
-        const select = document.getElementById("id_tecnico");
-        tecnicos.forEach(tecnico => {
-            const option = document.createElement("option");
-            option.value = tecnico.id_funcionario;
-            option.textContent = tecnico.nome;
-            select.appendChild(option);
+function carregarTecnicos() {
+    fetch(`${API_BASE}/api/tecnicos`)
+        .then(res => res.json())
+        .then(tecnicos => {
+            localStorage.setItem("cached_tecnicos", JSON.stringify(tecnicos)); // salva localmente
+            popularSelectTecnicos(tecnicos);
+        })
+        .catch(() => {
+            const cached = localStorage.getItem("cached_tecnicos");
+            if (cached) {
+                popularSelectTecnicos(JSON.parse(cached));
+            } else {
+                alert("Erro ao carregar técnicos e não há dados locais.");
+            }
         });
-    })
-    .catch(err => console.error("Erro ao carregar técnicos:", err));
+}
+
+function popularSelectTecnicos(tecnicos) {
+    const select = document.getElementById("id_tecnico");
+    select.innerHTML = '<option value="">Selecione o técnico</option>';
+    tecnicos.forEach(tecnico => {
+        const option = document.createElement("option");
+        option.value = tecnico.id_funcionario;
+        option.textContent = tecnico.nome;
+        select.appendChild(option);
+    });
+}
 
 // Função para enviar dados (com fallback para localStorage)
 function enviarRegistro(data) {
@@ -126,9 +141,9 @@ document.getElementById("formulario").addEventListener("submit", function (e) {
     enviarRegistro(data);
 });
 
-// Carregar máquinas
-carregarMaquinas();
-// Tentar reenviar registros pendentes ao carregar a página
+// Tentar reenviar registros pendentes ao carregar a página, carregar tecnicos e maquinas
 window.addEventListener("load", () => {
+    carregarMaquinas();
+    carregarTecnicos();
     verificarEnviosPendentes();
 });

@@ -5,7 +5,7 @@ const path = require('path');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 
 const db = new sqlite3.Database('./database.db');
 
@@ -25,6 +25,47 @@ app.get('/api/tecnicos', (req, res) => {
     db.all(`SELECT id_funcionario, nome FROM funcionarios`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
+    });
+});
+
+// Rota para buscar TODOS os checklists
+app.get('/api/checklist', (req, res) => {
+    db.all(`SELECT * FROM checklist`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// Rota para buscar TODOS os alertas
+app.get('/api/alertas', (req, res) => {
+    db.all(`SELECT * FROM alertas`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// Atualiza o status de um registro no checklist
+app.put('/api/checklist/:id/status', (req, res) => {
+    const id = req.params.id;
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ error: 'Status é obrigatório.' });
+    }
+
+    const query = `UPDATE checklist SET status = ? WHERE id_checklist = ?`;
+
+    db.run(query, [status, id], function (err) {
+        if (err) {
+            console.error("Erro ao atualizar status do checklist:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Registro não encontrado.' });
+        }
+
+        res.json({ success: true, message: 'Status atualizado com sucesso.' });
     });
 });
 
