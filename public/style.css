@@ -14,7 +14,7 @@ form {
     border-radius: 8px;
     max-width: 400px;
     margin: auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 label {
@@ -23,7 +23,10 @@ label {
     font-weight: bold;
 }
 
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
     width: 100%;
     padding: 10px;
     margin-top: 5px;
@@ -41,4 +44,85 @@ button {
 
 button:hover {
     background-color: #0056b3;
+}
+
+.status {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #333;
+    color: #fff;
+    padding: 5px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+.status.online {
+    background-color: #28a745;
+}
+
+.status.offline {
+    background-color: #dc3545;
+}
+
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.toast {
+    padding: 12px 18px;
+    margin-top: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    min-width: 250px;
+    max-width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    animation: fadein 0.3s ease, fadeout 0.4s ease 2.6s;
+}
+
+/* Cores por tipo */
+.toast.success {
+    background-color: #28a745;
+}
+
+.toast.error {
+    background-color: #dc3545;
+}
+
+.toast.info {
+    background-color: #007bff;
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeout {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
 }
