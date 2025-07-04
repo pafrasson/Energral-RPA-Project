@@ -13,6 +13,11 @@ const db = new sqlite3.Database('./database.db');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+//ping
+app.get('/api/ping', (req, res) => {
+    res.status(200).json({ message: "pong" });
+});
+
 // Rotas para buscar máquinas e técnicos
 app.get('/api/maquinas', (req, res) => {
     db.all(`SELECT id_equipamento FROM maquinas`, [], (err, rows) => {
@@ -22,7 +27,7 @@ app.get('/api/maquinas', (req, res) => {
 });
 
 app.get('/api/tecnicos', (req, res) => {
-    db.all(`SELECT id_funcionario, nome FROM funcionarios`, [], (err, rows) => {
+    db.all(`SELECT id_funcionario, nome FROM funcionarios ORDER BY nome`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });

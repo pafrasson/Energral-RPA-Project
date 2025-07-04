@@ -1,5 +1,41 @@
 const API_BASE = "http://localhost:3000";
 
+function atualizarStatusConexao() {
+    fetch(`${API_BASE}/api/ping`)
+        .then(() => {
+            atualizarStatusUI(true);
+        })
+        .catch(() => {
+            atualizarStatusUI(false);
+        });
+}
+
+function atualizarStatusUI(online) {
+    const statusDiv = document.getElementById("status-conexao");
+    if (online) {
+        statusDiv.textContent = "🟢 Conectado";
+        statusDiv.className = "status online";
+    } else {
+        statusDiv.textContent = "🔴 Sem conexão - registros serão salvos localmente";
+        statusDiv.className = "status offline";
+    }
+}
+
+setInterval(atualizarStatusConexao, 5000);
+atualizarStatusConexao();
+
+function mostrarToast(msg, tipo = "info") {
+    const toast = document.createElement("div");
+    toast.className = `toast ${tipo}`;
+    toast.textContent = msg;
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
 // Carrega máquinas no select
 function carregarMaquinas() {
     fetch(`${API_BASE}/api/maquinas`)
@@ -13,7 +49,7 @@ function carregarMaquinas() {
             if (cached) {
                 popularSelectMaquinas(JSON.parse(cached));
             } else {
-                alert("Erro ao carregar máquinas e não há dados locais.");
+                mostrarToast("❌ Erro ao carregar maquinas e não há dados locais.");
             }
         });
 }
@@ -42,7 +78,7 @@ function carregarTecnicos() {
             if (cached) {
                 popularSelectTecnicos(JSON.parse(cached));
             } else {
-                alert("Erro ao carregar técnicos e não há dados locais.");
+                mostrarToast("❌ Erro ao carregar técnicos e não há dados locais.");
             }
         });
 }
@@ -70,12 +106,12 @@ function enviarRegistro(data) {
         .then(res => res.json())
         .then(response => {
             if (response.success || response.id) {
-                alert("Registro salvo com sucesso!");
+                mostrarToast("✅ Registro salvo com sucesso!");
                 document.getElementById("formulario").reset();
                 verificarEnviosPendentes();
             } else {
                 salvarLocalmente(data);
-                alert("Servidor respondeu com erro. Registro salvo localmente.");
+                mostrarToast("⚠️ Servidor respondeu com erro. Registro salvo localmente.");
             }
         })
         .catch(err => {
@@ -146,4 +182,5 @@ window.addEventListener("load", () => {
     carregarMaquinas();
     carregarTecnicos();
     verificarEnviosPendentes();
+    mostrarToast("Página carregada", "info");
 });
