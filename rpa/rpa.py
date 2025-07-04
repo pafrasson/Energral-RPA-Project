@@ -16,32 +16,13 @@ import requests
 
 
 
-
-'''
-these conditionals get the paths of the database and pdf file respectivily, when in script it gets the one i setted,
-when in .exe it gets the path where the .exe is.
-'''
-
-directory_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend'
-
-if getattr(sys, 'frozen', False):
-    pdf_path = os.path.dirname(sys.executable)
-else:
-    pdf_path = 'C:/Users/Aluno/Desktop'
-
-if getattr(sys, 'frozen', False):
-    creden_path = os.path.dirname(sys.executable)
-else:
-    creden_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
-
-
 '''
 this function defines the credentials of the email and the recipient.
 '''
 def SendEmail(subject: str, body: str, attach: bool):
-    sender_email = ""
-    sender_password = ""
-    recipient_email = ""
+    sender_email = "gabriel.paiva.gamers@gmail.com"
+    sender_password = "rakvlxfpssgmfnrb"
+    recipient_email = "gabriel.paiva.gamers@gmail.com"
 
     logging.info('verifying if there is a need to attach the pdf file to the email')
     
@@ -278,6 +259,22 @@ def StartBot():
 
 
 
+
+'''
+these conditionals get the paths of the database and pdf file respectivily, when in script it gets the one i setted,
+when in .exe it gets the path where the .exe is.
+'''
+
+
+
+if getattr(sys, 'frozen', False):
+    pdf_path = os.path.dirname(sys.executable)
+    creden_path = os.path.dirname(sys.executable)
+else:
+    pdf_path = 'C:/Users/Aluno/Desktop'
+    creden_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
+
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -299,5 +296,8 @@ this variable initiates an counter to run through the rows of the table Alertas
 '''
 logging.info('finished connecting to systems')
 
-StartBot()
+
+if __name__ == "__main__":
+    StartBot()
+
 
