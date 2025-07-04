@@ -1,11 +1,21 @@
 const API_BASE = "http://localhost:3000";
+let conexaoOnline = null;
 
 function atualizarStatusConexao() {
-    fetch(`${API_BASE}/api/ping`)
+    fetch(`${API_BASE}/api/ping`, { cache: "no-store" })
         .then(() => {
+            if (conexaoOnline === false) {
+                mostrarToast("🔄 Conexão restabelecida. Enviando registros pendentes...", "success");
+                verificarEnviosPendentes(true); // <-- TRUE para indicar reconexão
+            }
+            conexaoOnline = true;
             atualizarStatusUI(true);
         })
         .catch(() => {
+            if (conexaoOnline === true || conexaoOnline === null) {
+                mostrarToast("📴 Sem conexão. Registros serão salvos localmente.", "error");
+            }
+            conexaoOnline = false;
             atualizarStatusUI(false);
         });
 }
@@ -126,7 +136,7 @@ function salvarLocalmente(data) {
     localStorage.setItem("registrosPendentes", JSON.stringify(pendentes));
 }
 
-function verificarEnviosPendentes() {
+function verificarEnviosPendentes(forcarReset = false) {
     const pendentes = JSON.parse(localStorage.getItem("registrosPendentes")) || [];
 
     if (pendentes.length === 0) return;
@@ -159,6 +169,14 @@ function verificarEnviosPendentes() {
         const enviadosComSucesso = indicesEnviados.filter(i => i !== null);
         const novosPendentes = pendentes.filter((_, i) => !enviadosComSucesso.includes(i));
         localStorage.setItem("registrosPendentes", JSON.stringify(novosPendentes));
+
+        if (enviadosComSucesso.length > 0) {
+            mostrarToast("📤 Registros pendentes enviados com sucesso.", "success");
+            if (forcarReset) {
+                const formulario = document.getElementById("formulario");
+                if (formulario) formulario.reset();
+            }
+        }
     });
 }
 
