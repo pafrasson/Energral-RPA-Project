@@ -2,52 +2,27 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
+app.use(cors()); 
+
 const db = new sqlite3.Database('./database.db');
 
 // Middleware
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Criação das tabelas
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS maquinas (
-        id TEXT PRIMARY KEY,
-        nome TEXT
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS tecnicos (
-        id TEXT PRIMARY KEY,
-        nome TEXT
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS registros (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_maquina TEXT,
-        id_tecnico TEXT,
-        data_hora TEXT,
-        observacao TEXT,
-        status TEXT,
-        FOREIGN KEY (id_maquina) REFERENCES maquinas(id),
-        FOREIGN KEY (id_tecnico) REFERENCES tecnicos(id)
-    )`);
-
-    db.run(`INSERT OR IGNORE INTO maquinas (id, nome) VALUES ('M001', 'Máquina 1'), ('M002', 'Máquina 2')`);
-    db.run(`INSERT OR IGNORE INTO tecnicos (id, nome) VALUES ('T001', 'Técnico João'), ('T002', 'Técnico Ana')`);
-
-});
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Rotas para buscar máquinas e técnicos
 app.get('/api/maquinas', (req, res) => {
-    db.all(`SELECT id, nome FROM maquinas`, [], (err, rows) => {
+    db.all(`SELECT id_equipamento FROM maquinas`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
 app.get('/api/tecnicos', (req, res) => {
-    db.all(`SELECT id, nome FROM tecnicos`, [], (err, rows) => {
+    db.all(`SELECT id_funcionario, nome FROM funcionarios`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -57,16 +32,39 @@ app.get('/api/tecnicos', (req, res) => {
 app.post('/api/registro', (req, res) => {
     const { id_maquina, id_tecnico, data_hora, observacao, status } = req.body;
 
-    db.run(
-        `INSERT INTO registros (id_maquina, id_tecnico, data_hora, observacao, status)
-         VALUES (?, ?, ?, ?, ?)`,
-        [id_maquina, id_tecnico, data_hora, observacao, status],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID });
-        }
-    );
+    // Inicia uma transação
+    db.serialize(() => {
+        // 1. Insere na tabela checklist
+        db.run(
+            `INSERT INTO checklist (data_hora, id_equipamento, id_funcionario, observacao, status)
+             VALUES (?, ?, ?, ?, ?)`,
+            [data_hora, id_maquina, id_tecnico, observacao, status],
+            function (err) {
+                if (err) {
+                    console.error("Erro ao inserir no checklist:", err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+
+                const insertedId = this.lastID;
+
+                // 2. Atualiza o status da máquina correspondente
+                db.run(
+                    `UPDATE maquinas SET status_maquina = ? WHERE id_equipamento = ?`,
+                    [status, id_maquina],
+                    function (err2) {
+                        if (err2) {
+                            console.error("Erro ao atualizar status da máquina:", err2.message);
+                            return res.status(500).json({ error: err2.message });
+                        }
+
+                        res.json({ success: true, id: insertedId });
+                    }
+                );
+            }
+        );
+    });
 });
+
 
 // Iniciar servidor
 const PORT = 3000;
