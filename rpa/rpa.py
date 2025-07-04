@@ -93,7 +93,6 @@ def SendAlert(alerts):
                 logging.info('starting to check one item')
                 if checklist_id in checklist_dict:
                     item = checklist_dict[checklist_id]
-                    #esse query pega o id de equipamento e o status que estao na tabela checklist aonde o id da checklist da alerta for igual ao id da checklist da tabela checklist
                     status = item['status']
                     equipament = item['id_equipamento']
                     
