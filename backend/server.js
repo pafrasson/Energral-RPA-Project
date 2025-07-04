@@ -28,6 +28,30 @@ app.get('/api/tecnicos', (req, res) => {
     });
 });
 
+// Rota para buscar TODOS os checklists
+app.get('/api/getallchecklist', (req, res) => {
+    db.all(`SELECT * FROM checklist`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// Rota para buscar TODOS os alertas
+app.get('/api/getallalertas', (req, res) => {
+    db.all(`SELECT * FROM alertas`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+/* Rota para consultar o status e id das maquinas dos checklists
+app.get('/api/statuschecklist', (req, res) => {
+    db.all(`SELECT c.id_equipamento, c.status FROM checklist c WHERE c.id_checklist = '{row.id_checklist}`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});*/
+
 // Rota para inserir novo registro
 app.post('/api/registro', (req, res) => {
     const { id_maquina, id_tecnico, data_hora, observacao, status } = req.body;
