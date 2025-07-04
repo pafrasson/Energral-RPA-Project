@@ -27,7 +27,7 @@ app.get('/api/maquinas', (req, res) => {
 });
 
 app.get('/api/tecnicos', (req, res) => {
-    db.all(`SELECT id_funcionario, nome FROM funcionarios`, [], (err, rows) => {
+    db.all(`SELECT id_funcionario, nome FROM funcionarios ORDER BY nome`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
