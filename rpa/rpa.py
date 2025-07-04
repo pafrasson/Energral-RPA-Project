@@ -1,5 +1,4 @@
 import pandas as pd
-from sqlalchemy import create_engine
 import logging
 import smtplib
 from email import encoders
@@ -7,13 +6,14 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import time
-import sqlite3
 import threading
 import os
 import sys
 import gspread
 from google.oauth2 import service_account
 from google.auth.transport.requests import AuthorizedSession
+import requests
+import json
 
 
 
@@ -21,10 +21,8 @@ from google.auth.transport.requests import AuthorizedSession
 these conditionals get the paths of the database and pdf file respectivily, when in script it gets the one i setted,
 when in .exe it gets the path where the .exe is.
 '''
-if getattr(sys, 'frozen', False):
-    directory_path = os.path.dirname(sys.executable)
-else:
-    directory_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend'
+
+directory_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/backend'
 
 if getattr(sys, 'frozen', False):
     pdf_path = os.path.dirname(sys.executable)
@@ -97,29 +95,34 @@ def SendEmail(subject: str, body: str, attach: bool):
             server.sendmail(sender_email, recipient_email, message.as_string())
             server.quit()
 
-def SendAlert(alerts, cursor, conn):
+def SendAlert(alerts):
     logging.info('starting to check for critical failure')
 
     '''
     this part runs through the alertas table and searches for each Falha Crítica
     when he finds one he sends an email to the specified manager with the machine id and the checklist id of the failure 
     '''
-    if not alerts.empty:
+    if alerts:
         logging.info("there were failure machines")
         try:
-            for row in alerts.itertuples(index=False):
-                rowindex = 0
+            checklist = requests.get('http://localhost:3000/api/checklist').json()
+            checklist_dict = {item['id_checklist']: item for item in checklist}
+            for row in alerts:
+                checklist_id = row.get('id_checklist')
                 logging.info('starting to check one item')
-                valuesChecklist = pd.read_sql_query(f"SELECT c.id_equipamento, c.status FROM checklist c WHERE c.id_checklist = '{row.id_checklist}'", engine)
-                status = valuesChecklist.loc[rowindex, 'status']
-                equipament = valuesChecklist.loc[rowindex, 'id_equipamento']
-                if status == 'Falha Crítica' or 'falha crítica':
-                    logging.info("a critical failure was found")
-                    SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + row.id_checklist + ' da maquina de id: ' + equipament + ' constou falha critica', False)
-                    cursor.execute('UPDATE checklist SET status = ? WHERE id_checklist = ?', ('Falha Crítica*', row.id_checklist))
-                    conn.commit()
-                rowindex = rowindex + 1
-                logging.info('checked one item, going to next')
+                if checklist_id in checklist_dict:
+                    item = checklist_dict[checklist_id]
+                    #esse query pega o id de equipamento e o status que estao na tabela checklist aonde o id da checklist da alerta for igual ao id da checklist da tabela checklist
+                    status = item['status']
+                    equipament = item['id_equipamento']
+                    
+                    if status.lower() == 'falha crítica':
+                        logging.info("a critical failure was found")
+                        SendEmail('🚨Alerta!🚨', 'a checagem de id: ' + item['id_checklist'] + ' da maquina de id: ' + equipament + ' constou falha critica', False)
+                        update = requests.put(f"http://localhost:3000/api/checklist/{item['id_checklist']}/status", json={"status": "Falha Crítica*"})
+                    
+                        
+                    logging.info('checked one item, going to next')
         except Exception as e:
             logging.error('failure in the processing', e)
     else:
@@ -152,8 +155,39 @@ def SendSheetsFile(alerts):
     this part formats the columns to the right size
     '''
 
-    sheet1.update([checklist.columns.values.tolist()] + checklist.values.tolist())
-    sheet2.update([alerts.columns.values.tolist()] + alerts.values.tolist()) 
+def SendSheetsFile():
+    logging.info('starting to write data tables to sheets')
+
+    '''
+    this part of the code gets the values of the tables of the database and write them in an google sheet file. 
+    '''
+    
+    scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = creds = service_account.Credentials.from_service_account_file(f"{creden_path}/credentials.json", scopes=scope)
+    client = gspread.authorize(creds)
+
+    spreadsheet = client.open('Teste')
+
+    sheet1 = spreadsheet.worksheet('Plan1')
+    sheet2 = spreadsheet.worksheet('Plan2')
+
+
+    '''
+    this part formats the columns to the right size
+    '''
+    if checklist:
+            header = list(checklist[0].keys())
+            rows = [list(item.values()) for item in checklist]
+            sheet1.update([header] + rows) 
+
+    if alerts:
+            header = list(alerts[0].keys())
+            rows = [list(item.values()) for item in alerts]
+            sheet2.update([header] + rows) 
 
 
 
@@ -229,34 +263,35 @@ def StartAlerts():
     ultimo_id = 0
 
     while True:
-        conn = sqlite3.connect(directory_path + '/database.db')
-        cursor = conn.cursor()
+        alerts = requests.get('http://localhost:3000/api/alertas')
+        alerts = alerts.json()
+        novos_registros = []
+        for row in alerts:
+            if ultimo_id < row['id_alerta']:
+                novos_registros.append(row)
 
-        cursor.execute("SELECT * FROM alertas WHERE id_alerta > ?", (ultimo_id,))
-        novos_registros = cursor.fetchall()
 
         if novos_registros:
-            alerts = pd.read_sql_query("SELECT * FROM alertas WHERE id_alerta > ?", engine, params=(ultimo_id,))
-
-            SendAlert(alerts, cursor, conn)
+            alerts = novos_registros
+            
+            SendAlert(alerts)
+            
 
 
             for registro in novos_registros:
-                ultimo_id = max(ultimo_id, registro[0])
+                ultimo_id = max(ultimo_id, registro['id_alerta'])
 
 
-        conn.close()
         time.sleep(10)
 
 def StartSheetsFile():
     while True:
-        alerts = pd.read_sql_query("SELECT * FROM alertas;", engine)
 
-        SendSheetsFile(alerts)
+        SendSheetsFile()
 
         time.sleep(14400)
 
-'''
+''' 
 the threading let two loops run simultaniously
 '''
 def StartBot():
@@ -280,13 +315,14 @@ this part connects the code with the database and gets the information of the
 specified table
 '''
 pdf_file = f'{pdf_path}/Teste.pdf'
-engine = create_engine(f'sqlite:///{directory_path}/database.db')
-checklist = pd.read_sql_query("SELECT * FROM checklist;", engine)
+checklist = requests.get('http://localhost:3000/api/checklist')
+checklist = checklist.json()
+alerts = requests.get('http://localhost:3000/api/alertas')
+alerts = alerts.json()
 '''
 this variable initiates an counter to run through the rows of the table Alertas
 '''
 logging.info('finished connecting to systems')
 
-
-
 StartBot()
+
