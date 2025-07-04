@@ -13,7 +13,7 @@ import gspread
 from google.oauth2 import service_account
 from google.auth.transport.requests import AuthorizedSession
 import requests
-import json
+
 
 
 
@@ -129,31 +129,6 @@ def SendAlert(alerts):
         logging.info("no critical failure was found")
     logging.info('finished checking for critical failures')
 
-
-
-def SendSheetsFile(alerts):
-    logging.info('starting to write data tables to sheets')
-
-    '''
-    this part of the code gets the values of the tables of the database and write them in an google sheet file. 
-    '''
-    
-    scope = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-    ]
-
-    creds = creds = service_account.Credentials.from_service_account_file(f"{creden_path}/credentials.json", scopes=scope)
-    client = gspread.authorize(creds)
-
-    spreadsheet = client.open('Teste')
-
-    sheet1 = spreadsheet.worksheet('Plan1')
-    sheet2 = spreadsheet.worksheet('Plan2')
-    
-    '''
-    this part formats the columns to the right size
-    '''
 
 def SendSheetsFile():
     logging.info('starting to write data tables to sheets')
