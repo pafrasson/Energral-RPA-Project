@@ -37,7 +37,7 @@ app.get('/api/checklist', (req, res) => {
 });
 
 // Rota para buscar TODOS os alertas
-app.get('/api/getallalertas', (req, res) => {
+app.get('/api/alertas', (req, res) => {
     db.all(`SELECT * FROM alertas`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
