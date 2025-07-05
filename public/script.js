@@ -1,34 +1,102 @@
-// Carrega máquinas no select
-fetch("/api/maquinas")
-    .then(res => res.json())
-    .then(maquinas => {
-        const select = document.getElementById("id_maquina");
-        maquinas.forEach(maquina => {
-            const option = document.createElement("option");
-            option.value = maquina.id_equipamento;
-            option.textContent = maquina.id_equipamento;
-            select.appendChild(option);
+const API_BASE = "http://localhost:3000";
+
+function atualizarStatusConexao() {
+    fetch(`${API_BASE}/api/ping`)
+        .then(() => {
+            atualizarStatusUI(true);
+        })
+        .catch(() => {
+            atualizarStatusUI(false);
         });
-    })
-    .catch(err => console.error("Erro ao carregar máquinas:", err));
+}
+
+function atualizarStatusUI(online) {
+    const statusDiv = document.getElementById("status-conexao");
+    if (online) {
+        statusDiv.textContent = "🟢 Conectado";
+        statusDiv.className = "status online";
+    } else {
+        statusDiv.textContent = "🔴 Sem conexão - registros serão salvos localmente";
+        statusDiv.className = "status offline";
+    }
+}
+
+setInterval(atualizarStatusConexao, 5000);
+atualizarStatusConexao();
+
+function mostrarToast(msg, tipo = "info") {
+    const toast = document.createElement("div");
+    toast.className = `toast ${tipo}`;
+    toast.textContent = msg;
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Carrega máquinas no select
+function carregarMaquinas() {
+    fetch(`${API_BASE}/api/maquinas`)
+        .then(res => res.json())
+        .then(maquinas => {
+            localStorage.setItem("cached_maquinas", JSON.stringify(maquinas)); // salva localmente
+            popularSelectMaquinas(maquinas);
+        })
+        .catch(() => {
+            const cached = localStorage.getItem("cached_maquinas");
+            if (cached) {
+                popularSelectMaquinas(JSON.parse(cached));
+            } else {
+                mostrarToast("❌ Erro ao carregar maquinas e não há dados locais.");
+            }
+        });
+}
+
+function popularSelectMaquinas(maquinas) {
+    const select = document.getElementById("id_maquina");
+    select.innerHTML = '<option value="">Selecione a máquina</option>';
+    maquinas.forEach(maquina => {
+        const option = document.createElement("option");
+        option.value = maquina.id_equipamento;
+        option.textContent = maquina.id_equipamento;
+        select.appendChild(option);
+    });
+}
 
 // Carrega técnicos no select
-fetch("/api/tecnicos")
-    .then(res => res.json())
-    .then(tecnicos => {
-        const select = document.getElementById("id_tecnico");
-        tecnicos.forEach(tecnico => {
-            const option = document.createElement("option");
-            option.value = tecnico.id_funcionario;
-            option.textContent = tecnico.nome;
-            select.appendChild(option);
+function carregarTecnicos() {
+    fetch(`${API_BASE}/api/tecnicos`)
+        .then(res => res.json())
+        .then(tecnicos => {
+            localStorage.setItem("cached_tecnicos", JSON.stringify(tecnicos)); // salva localmente
+            popularSelectTecnicos(tecnicos);
+        })
+        .catch(() => {
+            const cached = localStorage.getItem("cached_tecnicos");
+            if (cached) {
+                popularSelectTecnicos(JSON.parse(cached));
+            } else {
+                mostrarToast("❌ Erro ao carregar técnicos e não há dados locais.");
+            }
         });
-    })
-    .catch(err => console.error("Erro ao carregar técnicos:", err));
+}
+
+function popularSelectTecnicos(tecnicos) {
+    const select = document.getElementById("id_tecnico");
+    select.innerHTML = '<option value="">Selecione o técnico</option>';
+    tecnicos.forEach(tecnico => {
+        const option = document.createElement("option");
+        option.value = tecnico.id_funcionario;
+        option.textContent = tecnico.nome;
+        select.appendChild(option);
+    });
+}
 
 // Função para enviar dados (com fallback para localStorage)
 function enviarRegistro(data) {
-    fetch("/api/registro", {
+    fetch(`${API_BASE}/api/registro`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -38,12 +106,12 @@ function enviarRegistro(data) {
         .then(res => res.json())
         .then(response => {
             if (response.success || response.id) {
-                alert("Registro salvo com sucesso!");
+                mostrarToast("✅ Registro salvo com sucesso!");
                 document.getElementById("formulario").reset();
                 verificarEnviosPendentes();
             } else {
                 salvarLocalmente(data);
-                alert("Servidor respondeu com erro. Registro salvo localmente.");
+                mostrarToast("⚠️ Servidor respondeu com erro. Registro salvo localmente.");
             }
         })
         .catch(err => {
@@ -60,12 +128,11 @@ function salvarLocalmente(data) {
 
 function verificarEnviosPendentes() {
     const pendentes = JSON.parse(localStorage.getItem("registrosPendentes")) || [];
+
     if (pendentes.length === 0) return;
 
-    const enviados = [];
-
-    pendentes.forEach((registro, index) => {
-        fetch("/api/registro", {
+    const promessas = pendentes.map((registro, index) => {
+        return fetch(`${API_BASE}/api/registro`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -75,21 +142,24 @@ function verificarEnviosPendentes() {
             .then(res => res.json())
             .then(response => {
                 if (response.success || response.id) {
-                    enviados.push(index);
-                    console.log("Registro pendente enviado com sucesso.");
+                    console.log("Registro pendente enviado com sucesso:", registro);
+                    return index; // marcar como enviado
+                } else {
+                    console.warn("Servidor respondeu com erro ao reenviar registro.");
+                    return null;
                 }
             })
             .catch(err => {
-                console.warn("Falha ao reenviar registro pendente.", err);
+                console.warn("Erro ao reenviar registro pendente:", err);
+                return null;
             });
     });
 
-    // Remover os que foram enviados com sucesso
-    setTimeout(() => {
-        const atualizados = JSON.parse(localStorage.getItem("registrosPendentes")) || [];
-        const novosPendentes = atualizados.filter((_, i) => !enviados.includes(i));
+    Promise.all(promessas).then(indicesEnviados => {
+        const enviadosComSucesso = indicesEnviados.filter(i => i !== null);
+        const novosPendentes = pendentes.filter((_, i) => !enviadosComSucesso.includes(i));
         localStorage.setItem("registrosPendentes", JSON.stringify(novosPendentes));
-    }, 2000);
+    });
 }
 
 // Envio do formulário
@@ -107,6 +177,10 @@ document.getElementById("formulario").addEventListener("submit", function (e) {
     enviarRegistro(data);
 });
 
-// Tentar reenviar registros pendentes ao carregar a página
-window.addEventListener("load", verificarEnviosPendentes);
-
+// Tentar reenviar registros pendentes ao carregar a página, carregar tecnicos e maquinas
+window.addEventListener("load", () => {
+    carregarMaquinas();
+    carregarTecnicos();
+    verificarEnviosPendentes();
+    mostrarToast("Página carregada", "info");
+});
