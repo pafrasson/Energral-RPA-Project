@@ -38,9 +38,9 @@ if getattr(sys, 'frozen', False):
     png_path = os.path.dirname(sys.executable)
 else:
     base_path = os.path.dirname(os.path.abspath(__file__))
-    pdf_path = 'C:/Users/gabri/OneDrive/Desktop'
-    creden_path = 'C:/Users/gabri/OneDrive/Documentos/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
-    png_path = 'C:/Users/gabri/OneDrive/Documentos/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
+    pdf_path = 'C:/Users/Aluno/Desktop'
+    creden_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
+    png_path = 'C:/Users/Aluno/Documents/Tarefa TCS/Codigo/Energral-RPA-Project/rpa'
 
 pdf_file = os.path.join(pdf_path, 'Teste.pdf')
 png_file = os.path.join(png_path, 'grafico_status_maquinas.png')
