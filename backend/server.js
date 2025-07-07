@@ -20,7 +20,7 @@ app.get('/api/ping', (req, res) => {
 
 // Rotas para buscar máquinas e técnicos
 app.get('/api/maquinas', (req, res) => {
-    db.all(`SELECT id_equipamento FROM maquinas`, [], (err, rows) => {
+    db.all(`SELECT id_equipamento, status_maquina FROM maquinas`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
