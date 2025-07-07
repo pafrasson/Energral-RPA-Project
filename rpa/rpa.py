@@ -97,8 +97,8 @@ def SendEmail(subject: str, body: str, attach: bool):
         if attach:
             # List of possible attachments with their display names
             attachments = [
-                (pdf_file, '/Relatorio_Checklist.pdf'),
-                (png_file, '/Status_Maquinas.png')
+                (pdf_file, '/Teste.pdf'),
+                (png_file, '/grafico_status_maquinas.png')
             ]
             
             files_attached = 0
